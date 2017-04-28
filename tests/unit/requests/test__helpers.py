@@ -35,6 +35,19 @@ class TestRequestsMixin(object):
         response = mock.Mock(content=body, spec=[u'content'])
         assert body == _helpers.RequestsMixin._get_body(response)
 
+    def test__bare_request(self):
+        transport, responses = _make_transport(http_client.OK)
+        method = u'PUT'
+        url = u'http://test.invalid'
+        data = mock.sentinel.data
+        headers = {u'captain': u'kirk', u'lt-com': u'data'}
+        ret_val = _helpers.RequestsMixin._bare_request(
+            transport, method, url, data=data, headers=headers)
+
+        assert ret_val is responses[0]
+        transport.request.assert_called_once_with(
+            method, url, data=data, headers=headers)
+
 
 def test_http_request():
     transport, responses = _make_transport(http_client.OK)

@@ -15,6 +15,7 @@
 """Shared utilities used by both downloads and uploads."""
 
 
+import functools
 import random
 import time
 
@@ -160,3 +161,35 @@ def wait_and_retry(func, get_status_code):
             return response
 
     return response
+
+
+def http_request(bare_request, get_status_code, transport, method,
+                 url, data=None, headers=None):
+    """Make an HTTP request with retries.
+
+    Args:
+        bare_request (Callable): Helper that makes a bare HTTP request without
+            error handling or retries. Assumed to take arguments:
+
+                * transport
+                * method
+                * url
+                * data
+                * headers
+
+            where ``data`` and ``headers`` are keyword arguments.
+        get_status_code (Callable[Any, int]): Helper to get a status code
+            from a response.
+        transport (object): An object which can make authenticated requests.
+        method (str): The HTTP method for the request.
+        url (str): The URL for the request.
+        data (Optional[bytes]): The body of the request.
+        headers (Mapping[str, str]): The headers for the request (``transport``
+            may also add additional headers).
+
+    Returns:
+        object: The HTTP response returned by ``transport``.
+    """
+    func = functools.partial(
+        bare_request, transport, method, url, data=data, headers=headers)
+    return wait_and_retry(func, get_status_code)

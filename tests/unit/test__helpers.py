@@ -67,10 +67,6 @@ class Test_header_required(object):
 
 class Test_require_status_code(object):
 
-    @staticmethod
-    def _get_status_code(response):
-        return response.status_code
-
     def test_success(self):
         status_codes = (http_client.OK, http_client.CREATED)
         acceptable = (
@@ -82,7 +78,7 @@ class Test_require_status_code(object):
         for value in acceptable:
             response = _make_response(value)
             status_code = _helpers.require_status_code(
-                response, status_codes, self._get_status_code)
+                response, status_codes, _get_status_code)
             assert value == status_code
 
     def test_success_with_callback(self):
@@ -90,7 +86,7 @@ class Test_require_status_code(object):
         response = _make_response(http_client.OK)
         callback = mock.Mock(spec=[])
         status_code = _helpers.require_status_code(
-            response, status_codes, self._get_status_code, callback=callback)
+            response, status_codes, _get_status_code, callback=callback)
         assert status_code == http_client.OK
         callback.assert_not_called()
 
@@ -99,7 +95,7 @@ class Test_require_status_code(object):
         response = _make_response(http_client.OK)
         with pytest.raises(exceptions.InvalidResponse) as exc_info:
             _helpers.require_status_code(
-                response, status_codes, self._get_status_code)
+                response, status_codes, _get_status_code)
 
         error = exc_info.value
         assert error.response is response
@@ -113,7 +109,7 @@ class Test_require_status_code(object):
         callback = mock.Mock(spec=[])
         with pytest.raises(exceptions.InvalidResponse) as exc_info:
             _helpers.require_status_code(
-                response, status_codes, self._get_status_code,
+                response, status_codes, _get_status_code,
                 callback=callback)
 
         error = exc_info.value
@@ -232,6 +228,26 @@ class Test_wait_and_retry(object):
         sleep_mock.assert_any_call(16.5)
         sleep_mock.assert_any_call(32.25)
         sleep_mock.assert_any_call(64.125)
+
+
+def test_http_request():
+    bare_request = mock.Mock(spec=[])
+    response = _make_response(http_client.OK)
+    bare_request.return_value = response
+
+    transport = mock.sentinel.transport
+    method = u'POST'
+    url = u'http://test.invalid'
+    data = mock.sentinel.data
+    headers = {u'one': u'fish', u'blue': u'fish'}
+
+    ret_val = _helpers.http_request(
+        bare_request, _get_status_code, transport, method, url,
+        data=data, headers=headers)
+
+    assert ret_val is response
+    bare_request.assert_called_once_with(
+        transport, method, url, data=data, headers=headers)
 
 
 def _make_response(status_code):

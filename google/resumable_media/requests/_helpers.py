@@ -67,6 +67,26 @@ class RequestsMixin(object):
         """
         return response.content
 
+    @staticmethod
+    def _bare_request(transport, method, url, data=None, headers=None):
+        """Make a bare HTTP request.
+
+        Args:
+            transport (~requests.Session): A ``requests`` object which can make
+                authenticated requests via a ``request()`` method. This method
+                must accept an HTTP method, an upload URL, a ``data`` keyword
+                argument and a ``headers`` keyword argument.
+            method (str): The HTTP method for the request.
+            url (str): The URL for the request.
+            data (Optional[bytes]): The body of the request.
+            headers (Mapping[str, str]): The headers for the request
+                (``transport`` may also add additional headers).
+
+        Returns:
+            ~requests.Response: The return value of ``transport.request()``.
+        """
+        return transport.request(method, url, data=data, headers=headers)
+
 
 def http_request(transport, method, url, data=None, headers=None):
     """Make an HTTP request.
